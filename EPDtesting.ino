@@ -31,6 +31,8 @@ Servo pan, tilt;
 //timing periods
 unsigned long time_now = 0;
 const int periodServo = 500; //ms
+const int periodScreen = 2000;
+const int fiftyms = 50;
 
 //initialize the servo variables
 //tracking variables
@@ -156,12 +158,12 @@ void setup()
   //Attaching servos and setting initial position
   pan.attach(panServo);
   tilt.attach(tiltServo);
+  
   pan.write(panInitial);
-  delay(50);
-  tilt.write(tiltInitial);
-  delay(50);
-    analogWrite(azimuthGauge,azimuthInitial);
+  tilt.write(tiltInitial);     
+  analogWrite(azimuthGauge,azimuthInitial);     
   analogWrite(elevationGauge,elevationInitial);
+  
   panPos = panInitial;
   tiltPos = tiltInitial;
   
@@ -174,9 +176,11 @@ void setup()
   Serial.begin(9600);
   display.init();
   helloURC();
+  time_now = millis();
+  
   delay(2000);
-  statusScreen();
-  delay(200);
+  statusScreen();      
+
 }
 
 
@@ -231,7 +235,9 @@ void keyPressed()
 //  Serial.print(keyLogger[15]);
 //  Serial.println("");
 
-  
+}
+void updateKeyboardScreen()
+{  
   display.setRotation(0);
   display.setFont(&FreeMonoBold18pt7b);
   display.setTextColor(GxEPD_BLACK);
@@ -249,7 +255,7 @@ void keyPressed()
     //display.setFullWindow();
 
     //remember to use increment of 8
-    display.setPartialWindow(x_input-24,y_input-24,360,48);
+    display.setPartialWindow(x_input-24,y_input-24,376,48);
     display.firstPage();
     do
     {
@@ -467,6 +473,7 @@ void statusScreen()
 
   
   while (display.nextPage());
+
 }
 
 
@@ -495,7 +502,7 @@ void loop() {
 //   }
 
  //right-pan-azimuth
-  if(digitalRead(right) == LOW && azimuthPos <= servoMax){
+  if(digitalRead(right) == LOW && azimuthPos <= servoMax && antennaAligned == false){
     if( millis() > time_now + periodServo)
     {
       time_now = millis();    
@@ -522,22 +529,22 @@ void loop() {
 
    
  //left-pan-azimuth
-  if(digitalRead(left) == LOW && azimuthPos >= servoMin){
+  if(digitalRead(left) == LOW && azimuthPos >= servoMin && antennaAligned == false){
     if( millis() > time_now + periodServo)
     {
       time_now = millis();    
       //Move elevation gauge
       azimuthPos = azimuthPos - jogSpeed;
-      Serial.print("Az Gauge Pos: ");
-      Serial.print(azimuthPos);
+//      Serial.print("Az Gauge Pos: ");
+//      Serial.print(azimuthPos);
       analogWrite(azimuthGauge,azimuthPos);
   
       //Move pan servo
       panPos = panPos - jogSpeed;
       pan.write(panPos);
       //delay(500);
-      Serial.print("   Servo left: ");
-      Serial.println(panPos);
+//      Serial.print("   Servo left: ");
+//      Serial.println(panPos);
   
   
       //If both gauges are lined up, then send signal to the Pi
@@ -549,22 +556,22 @@ void loop() {
    }
 
 //up-tilt-elevation
-  if(digitalRead(up) == LOW && elevationPos <= servoMax){
+  if(digitalRead(up) == LOW && elevationPos <= servoMax && antennaAligned == false){
     if( millis() > time_now + periodServo)
     {
       time_now = millis();      
       //Move elevation gauge
       elevationPos = elevationPos + jogSpeed;
-      Serial.print("Ev Gauge Pos: ");
-      Serial.print(elevationPos);
+//      Serial.print("Ev Gauge Pos: ");
+//      Serial.print(elevationPos);
       analogWrite(elevationGauge,elevationPos);
   
       //Move pan servo
       tiltPos = tiltPos + jogSpeed;
       tilt.write(tiltPos);
       //delay(500);
-      Serial.print("  Servo Up: ");
-      Serial.println(tiltPos);
+//      Serial.print("  Servo Up: ");
+//      Serial.println(tiltPos);
   
       
       //If both gauges are lined up, then send signal to the Pi
@@ -576,7 +583,7 @@ void loop() {
    }
 
 //down-tilt-elevation
-  if(digitalRead(down) == LOW && elevationPos >= servoMin){
+  if(digitalRead(down) == LOW && elevationPos >= servoMin && antennaAligned == false){
     if( millis() > time_now + periodServo)
     {
       time_now = millis();
@@ -594,7 +601,7 @@ void loop() {
       Serial.print("   Servo Down: ");
       Serial.println(tiltPos);
   
-      //If both gauges are lined up, then send signal to the Pi
+      //If both gauges are lined up, then set a flag to true
       if(azimuthPos <= desiredAzimuthMax && azimuthPos >= desiredAzimuthMin && elevationPos <= desiredElevationMax && elevationPos >= desiredElevationMin){
        Serial.println("postition locked");
        antennaAligned = true;
@@ -603,9 +610,7 @@ void loop() {
     
    }
 
-//Delay so they can look at the gauges
 
-//delay(50);
-  
+  updateKeyboardScreen();
 
 }
