@@ -24,8 +24,11 @@ bool switchRead07 = false;
 bool switchRead08 = false;
 bool switchRead09 = false;
 bool switchRead10 = false;
+bool switchRead11 = false;
+bool switchRead12 = false;
+bool switchRead13 = false;
 
-const byte switchInputArray[13] = {switchInput01, switchInput02, switchInput03, switchInput04, switchInput05, switchInput06, switchInput07, switchInput08, switchInput09,switchInput10, switchInput11, switchInput12, switchInput13}:
+const byte switchInputArray[13] = {switchInput01, switchInput02, switchInput03, switchInput04, switchInput05, switchInput06, switchInput07, switchInput08, switchInput09,switchInput10, switchInput11, switchInput12, switchInput13};
 bool switchArrayRead[13]={switchRead01, switchRead02, switchRead03, switchRead04, switchRead05, switchRead06, switchRead07, switchRead08, switchRead09 , switchRead10, switchRead11, switchRead12, switchRead13};
 
 //variables to keep track of the timing of recent interrupts
@@ -57,9 +60,12 @@ unsigned long last_switch_time11 = 0;
 unsigned long last_switch_time12 = 0;
 unsigned long last_switch_time13 = 0;
 
+int y = 0;
+int x = 0;
+
 void setup() {
   for (byte i = 0; i < 14; i++){
-    pinMode(switchInputArray[i], INPUT_PULLUP)
+    pinMode(switchInputArray[i], INPUT_PULLUP);
   }
   Serial.begin(9600);
   attachInterrupt(digitalPinToInterrupt(switchInput01), switch01_ISR, LOW);
@@ -81,13 +87,13 @@ void setup() {
 
 void loop(){
   Serial.print("loop " );
-  Serial.print(x++ );
+  Serial.print(x++);
   Serial.println();
   delay(500);
 }
 
 void switch01_ISR(){
-  switch_time01 = mills();
+  switch_time01 = millis();
   if (switch_time01 - last_switch_time01 > 250){
     Serial.print("Interrupt1 ");
     Serial.print(y++);
@@ -97,7 +103,7 @@ void switch01_ISR(){
   }
 
   void switch02_ISR(){
-  switch_time02 = mills();
+  switch_time02 = millis();
   if (switch_time02 - last_switch_time02 > 250){
     Serial.print("Interrupt2 ");
     Serial.print(y++);
@@ -108,7 +114,7 @@ void switch01_ISR(){
 
 
   void switch03_ISR(){
-  switch_time03 = mills();
+  switch_time03 = millis();
   if (switch_time03 - last_switch_time03 > 250){
     Serial.print("Interrupt3 ");
     Serial.print(y++);
@@ -119,7 +125,7 @@ void switch01_ISR(){
 
 
    void switch04_ISR(){
-  switch_time04 = mills();
+  switch_time04 = millis();
   if (switch_time04 - last_switch_time04 > 250){
     Serial.print("Interrupt4 ");
     Serial.print(y++);
@@ -129,7 +135,7 @@ void switch01_ISR(){
   }
 
    void switch05_ISR(){
-  switch_time05 = mills();
+  switch_time05 = millis();
   if (switch_time05 - last_switch_time05 > 250){
     Serial.print("Interrupt5 ");
     Serial.print(y++);
@@ -139,7 +145,7 @@ void switch01_ISR(){
   }
 
    void switch06_ISR(){
-  switch_time06 = mills();
+  switch_time06 = millis();
   if (switch_time06 - last_switch_time06 > 250){
     Serial.print("Interrupt6 ");
     Serial.print(y++);
@@ -149,7 +155,7 @@ void switch01_ISR(){
   }
 
    void switch07_ISR(){
-  switch_time07 = mills();
+  switch_time07 = millis();
   if (switch_time07 - last_switch_time07 > 250){
     Serial.print("Interrupt7 ");
     Serial.print(y++);
@@ -159,7 +165,7 @@ void switch01_ISR(){
   }
 
    void switch08_ISR(){
-  switch_time08 = mills();
+  switch_time08 = millis();
   if (switch_time08 - last_switch_time08 > 250){
     Serial.print("Interrupt8 ");
     Serial.print(y++);
