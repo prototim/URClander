@@ -133,6 +133,10 @@ int x = 0;
 
 void setup() {
 
+  Serial.begin(9600);
+  Serial.println("Start! Test 5");
+
+
   // Initialize Switches and Joystick
   for (byte i = 0; i < 13; i++){
     pinMode(switchInputArray[i], INPUT_PULLUP);
@@ -151,6 +155,7 @@ void setup() {
   
   analogWrite(azimuthGauge,azimuthInitial);     
   analogWrite(elevationGauge,elevationInitial);
+  delay(500);
   
   panPos = panInitial;
   tiltPos = tiltInitial;
@@ -158,24 +163,23 @@ void setup() {
   azimuthPos = azimuthInitial;
   elevationPos = elevationInitial;
   
-  Serial.begin(9600);
 
 
 
   
   //Creation of interrupts for switches and joyswitch
-  attachInterrupt(digitalPinToInterrupt(oxygenValveSwitch), oxygenValve_ISR, LOW);
-  attachInterrupt(digitalPinToInterrupt(methaneValveSwitch), methaneValve_ISR, LOW);
-  attachInterrupt(digitalPinToInterrupt(turboPumpSwitch), turboPump_ISR, LOW);
-  attachInterrupt(digitalPinToInterrupt(landerLockSwitch), landerLock_ISR, LOW);
-  attachInterrupt(digitalPinToInterrupt(ignitionEnabledSwitch), ignitionEnabled_ISR, LOW);
-  attachInterrupt(digitalPinToInterrupt(masterArmSwitch), masterArm_ISR, LOW);
-  attachInterrupt(digitalPinToInterrupt(telemetrySwitch), telemetry_ISR, LOW);
-  attachInterrupt(digitalPinToInterrupt(initiateLaunchSwitch), initiateLaunch_ISR, LOW);
-  attachInterrupt(digitalPinToInterrupt(joyUp), joyUp_ISR, LOW);
-  attachInterrupt(digitalPinToInterrupt(joyDown), joyDown_ISR, LOW);
-  attachInterrupt(digitalPinToInterrupt(joyLeft), joyLeft_ISR, LOW);
-  attachInterrupt(digitalPinToInterrupt(joyRight), joyRight_ISR, LOW);
+//  attachInterrupt(digitalPinToInterrupt(oxygenValveSwitch), oxygenValve_ISR, LOW);
+//  attachInterrupt(digitalPinToInterrupt(methaneValveSwitch), methaneValve_ISR, LOW);
+//  attachInterrupt(digitalPinToInterrupt(turboPumpSwitch), turboPump_ISR, LOW);
+//  attachInterrupt(digitalPinToInterrupt(landerLockSwitch), landerLock_ISR, LOW);
+//  attachInterrupt(digitalPinToInterrupt(ignitionEnabledSwitch), ignitionEnabled_ISR, LOW);
+//  attachInterrupt(digitalPinToInterrupt(masterArmSwitch), masterArm_ISR, LOW);
+//  attachInterrupt(digitalPinToInterrupt(telemetrySwitch), telemetry_ISR, LOW);
+//  attachInterrupt(digitalPinToInterrupt(initiateLaunchSwitch), initiateLaunch_ISR, LOW);
+//  attachInterrupt(digitalPinToInterrupt(joyUp), joyUp_ISR, LOW);
+//  attachInterrupt(digitalPinToInterrupt(joyDown), joyDown_ISR, LOW);
+//  attachInterrupt(digitalPinToInterrupt(joyLeft), joyLeft_ISR, LOW);
+//  attachInterrupt(digitalPinToInterrupt(joyRight), joyRight_ISR, LOW);
   
   
   //Initialize Display
@@ -193,7 +197,29 @@ void loop(){
   //attach USB task
   usb.Task();
   updateKeyboardScreen();
-}
+
+
+  delay(3000);
+
+//  display.setRotation(0);
+//  display.setFont(&FreeMonoBold9pt7b);
+//  display.setTextColor(GxEPD_BLACK);
+//  int16_t tbx, tby; uint16_t tbw, tbh;
+//
+//
+//  uint16_t x_input = 24;
+//  uint16_t y_input = 8;
+//
+//    //remember to use increment of 8
+//    display.setPartialWindow(x_input,y_input-8,24,152);
+//    display.firstPage();
+//    do
+//    {
+//      display.fillRect(x_input, y_input, 24, 8, GxEPD_BLACK);
+//    }
+//    while (display.nextPage());
+ }
+
 
 
 //--------------------KEYBOARD FUNCTION-----------------------
@@ -375,9 +401,28 @@ void taskUpdate(int switchNum){
 void oxygenValve_ISR(){
   oxygenValve_time = millis();
   if (oxygenValve_time - last_oxygenValve_time > 250){
-     taskUpdate(1);
-    last_oxygenValve_time = oxygenValve_time;
+//     taskUpdate(1);
+
+  display.setRotation(0);
+  display.setFont(&FreeMonoBold9pt7b);
+  display.setTextColor(GxEPD_BLACK);
+  int16_t tbx, tby; uint16_t tbw, tbh;
+
+
+  uint16_t x_input = 24;
+  uint16_t y_input = 8;
+
+    //remember to use increment of 8
+    display.setPartialWindow(x_input,y_input-8,24,152);
+    display.firstPage();
+    do
+    {
+      display.fillRect(x_input, y_input, 24, 8, GxEPD_BLACK);
     }
+    while (display.nextPage());
+  }
+
+    last_oxygenValve_time = oxygenValve_time;
   }
 
   void methaneValve_ISR(){
@@ -403,13 +448,28 @@ void oxygenValve_ISR(){
 
 
    void landerLock_ISR(){
+    Serial.print("In lander lock");
   landerLock_time = millis();
-  if (landerLock_time - last_landerLock_time > 250){
-    Serial.print("Interrupt4 ");
-    Serial.print(y++);
-    Serial.println();
-    last_landerLock_time = landerLock_time;
+ // if (landerLock_time - last_landerLock_time > 250){
+     display.setRotation(0);
+  display.setFont(&FreeMonoBold9pt7b);
+  display.setTextColor(GxEPD_BLACK);
+  int16_t tbx, tby; uint16_t tbw, tbh;
+
+
+  uint16_t x_input = 24;
+  uint16_t y_input = 8;
+
+    //remember to use increment of 8
+    display.setPartialWindow(x_input,y_input-8,24,152);
+    display.firstPage();
+    do
+    {
+      display.fillRect(x_input, y_input, 24, 8, GxEPD_BLACK);
     }
+    while (display.nextPage());
+//    last_landerLock_time = landerLock_time;
+//    }
   }
 
    void ignitionEnabled_ISR(){
@@ -454,6 +514,7 @@ void oxygenValve_ISR(){
 
 //joyUp-tilt-elevation
   void joyUp_ISR(){
+    Serial.print("UP!!");
   joyUp_time = millis();
   if (joyUp_time - last_joyUp_time > 500){
         
@@ -464,6 +525,7 @@ void oxygenValve_ISR(){
       tiltPos = tiltPos + jogSpeed;
       if(servoMin< tiltPos <servoMax){
         //Move tilt servo  
+        Serial.print("Moving");
         tilt.write(tiltPos);
       }
     last_joyUp_time = joyUp_time;
