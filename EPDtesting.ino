@@ -83,6 +83,7 @@ const byte elevationGauge = 5; //PWM pin
 
 //antennaAligned
 
+
 bool oxygenValveRead = false;
 bool methaneValveRead = false;
 bool turboPumpRead = false;
@@ -130,208 +131,6 @@ unsigned long last_joyRight_time = 0;
 int y = 0;
 int x = 0;
 
-void taskUpdate(int switchNum)
-{
-  display.setRotation(0);
-  display.setFont(&FreeMonoBold9pt7b);
-  display.setTextColor(GxEPD_BLACK);
-  int16_t tbx, tby; uint16_t tbw, tbh;
-
-
-  uint16_t x_input = 24;
-  uint16_t y_input = 8;
-
-    //remember to use increment of 8
-    display.setPartialWindow(x_input,y_input-8,24,152);
-    display.firstPage();
-    do
-    {
-      display.fillRect(x_input, y_input+20*switchNum, 24, 8, GxEPD_BLACK);
-    }
-    while (display.nextPage());
-  
-  
-}
-
-
-void antennaAligned()
-{
-    //TIMMMMM WRITE ME SOME CODE!!!
-    Serial.println("postition locked");
-}
-
-//--------------------INTERRUPT FUNCTION-----------------------
-
-
-void oxygenValve_ISR()
-{
-  oxygenValve_time = millis();
-  if (oxygenValve_time - last_oxygenValve_time > 250){
-     taskUpdate(1);
-    last_oxygenValve_time = oxygenValve_time;
-    }
-}
-
-
-  void methaneValve_ISR(){
-  methaneValve_time = millis();
-  if (methaneValve_time - last_methaneValve_time > 250){
-    Serial.print("Interrupt2 ");
-    Serial.print(y++);
-    Serial.println();
-    last_methaneValve_time = methaneValve_time;
-    }
-  }
-
-
-  void turboPump_ISR(){
-  turboPump_time = millis();
-  if (turboPump_time - last_turboPump_time > 250){
-    Serial.print("Interrupt3 ");
-    Serial.print(y++);
-    Serial.println();
-    last_turboPump_time = turboPump_time;
-    }
-  }
-
-
-   void landerLock_ISR(){
-  landerLock_time = millis();
-  if (landerLock_time - last_landerLock_time > 250){
-    Serial.print("Interrupt4 ");
-    Serial.print(y++);
-    Serial.println();
-    last_landerLock_time = landerLock_time;
-    }
-  }
-
-   void ignitionEnabled_ISR(){
-  ignitionEnabled_time = millis();
-  if (ignitionEnabled_time - last_ignitionEnabled_time > 250){
-    Serial.print("Interrupt5 ");
-    Serial.print(y++);
-    Serial.println();
-    last_ignitionEnabled_time = ignitionEnabled_time;
-    }
-  }
-
-   void masterArm_ISR(){
-  masterArm_time = millis();
-  if (masterArm_time - last_masterArm_time > 250){
-    Serial.print("Interrupt6 ");
-    Serial.print(y++);
-    Serial.println();
-    last_masterArm_time = masterArm_time;
-    }
-  }
-
-   void telemetry_ISR(){
-  telemetry_time = millis();
-  if (telemetry_time - last_telemetry_time > 250){
-    Serial.print("Interrupt7 ");
-    Serial.print(y++);
-    Serial.println();
-    last_telemetry_time = telemetry_time;
-    }
-  }
-
-   void initiateLaunch_ISR(){
-  initiateLaunch_time = millis();
-  if (initiateLaunch_time - last_initiateLaunch_time > 250){
-    Serial.print("Interrupt8 ");
-    Serial.print(y++);
-    Serial.println();
-    last_initiateLaunch_time = initiateLaunch_time;
-    }
-  }
-
-//joyUp-tilt-elevation
-  void joyUp_ISR(){
-  joyUp_time = millis();
-  if (joyUp_time - last_joyUp_time > 500){
-        
-      //Move elevation gauge
-      elevationPos = elevationPos + jogSpeed;
-      analogWrite(elevationGauge,elevationPos);
-      
-      tiltPos = tiltPos + jogSpeed;
-      if(servoMin< tiltPos <servoMax){
-        //Move tilt servo  
-        tilt.write(tiltPos);
-      }
-    last_joyUp_time = joyUp_time;
-      if(azimuthPos <= desiredAzimuthMax && azimuthPos >= desiredAzimuthMin && elevationPos <= desiredElevationMax && elevationPos >= desiredElevationMin){
-    antennaAligned();
-      }
-    }
-  }
-
-//joyDown-tilt-elevation
-  void joyDown_ISR(){
-  joyDown_time = millis();
-  if (joyDown_time - last_joyDown_time > 500){
-        
-      //Move elevation gauge
-      elevationPos = elevationPos - jogSpeed;
-      analogWrite(elevationGauge,elevationPos);
-      
-      tiltPos = tiltPos - jogSpeed;
-      if(servoMin< tiltPos <servoMax){
-        //Move tilt servo  
-        tilt.write(tiltPos);
-      }
-    last_joyDown_time = joyDown_time;
-    
-      if(azimuthPos <= desiredAzimuthMax && azimuthPos >= desiredAzimuthMin && elevationPos <= desiredElevationMax && elevationPos >= desiredElevationMin){
-    antennaAligned();
-      }
-    }
-  }
-
-//joyLeft-pan-azimuth
-  void joyLeft_ISR(){
-  joyLeft_time = millis();
-  if (joyLeft_time - last_joyLeft_time > 500){
-        
-      //Move azimuth gauge
-      azimuthPos = azimuthPos - jogSpeed;
-      analogWrite(azimuthGauge,azimuthPos);
-      
-      panPos = panPos - jogSpeed;
-      if(servoMin< tiltPos <servoMax){
-        //Move pan servo  
-        pan.write(panPos);
-      }
-    last_joyLeft_time = joyLeft_time;
-    
-      if(azimuthPos <= desiredAzimuthMax && azimuthPos >= desiredAzimuthMin && elevationPos <= desiredElevationMax && elevationPos >= desiredElevationMin){
-    antennaAligned();
-      }
-    }
-  }
-
-//joyRight-pan-azimuth
-  void joyRight_ISR(){
-  joyRight_time = millis();
-  if (joyRight_time - last_joyRight_time > 500){
-        
-      //Move azimuth gauge
-      azimuthPos = azimuthPos + jogSpeed;
-      analogWrite(azimuthGauge,azimuthPos);
-      
-      panPos = panPos + jogSpeed;
-      if(servoMin< tiltPos <servoMax){
-        //Move pan servo  
-        pan.write(panPos);
-      }
-    last_joyRight_time = joyRight_time;
-    
-      if(azimuthPos <= desiredAzimuthMax && azimuthPos >= desiredAzimuthMin && elevationPos <= desiredElevationMax && elevationPos >= desiredElevationMin){
-    antennaAligned();
-      }
-    }
-  }
-  
 void setup() {
 
   // Initialize Switches and Joystick
@@ -547,5 +346,199 @@ void statusScreen()
 
 }
 
+//--------------------INTERRUPT FUNCTION-----------------------
+
+void taskUpdate(int switchNum){
+  display.setRotation(0);
+  display.setFont(&FreeMonoBold9pt7b);
+  display.setTextColor(GxEPD_BLACK);
+  int16_t tbx, tby; uint16_t tbw, tbh;
 
 
+  uint16_t x_input = 24;
+  uint16_t y_input = 8;
+
+    //remember to use increment of 8
+    display.setPartialWindow(x_input,y_input-8,24,152);
+    display.firstPage();
+    do
+    {
+      display.fillRect(x_input, y_input+20*switchNum, 24, 8, GxEPD_BLACK);
+    }
+    while (display.nextPage());
+  
+  
+  }
+
+void oxygenValve_ISR(){
+  oxygenValve_time = millis();
+  if (oxygenValve_time - last_oxygenValve_time > 250){
+     taskUpdate(1);
+    last_oxygenValve_time = oxygenValve_time;
+    }
+  }
+
+  void methaneValve_ISR(){
+  methaneValve_time = millis();
+  if (methaneValve_time - last_methaneValve_time > 250){
+    Serial.print("Interrupt2 ");
+    Serial.print(y++);
+    Serial.println();
+    last_methaneValve_time = methaneValve_time;
+    }
+  }
+
+
+  void turboPump_ISR(){
+  turboPump_time = millis();
+  if (turboPump_time - last_turboPump_time > 250){
+    Serial.print("Interrupt3 ");
+    Serial.print(y++);
+    Serial.println();
+    last_turboPump_time = turboPump_time;
+    }
+  }
+
+
+   void landerLock_ISR(){
+  landerLock_time = millis();
+  if (landerLock_time - last_landerLock_time > 250){
+    Serial.print("Interrupt4 ");
+    Serial.print(y++);
+    Serial.println();
+    last_landerLock_time = landerLock_time;
+    }
+  }
+
+   void ignitionEnabled_ISR(){
+  ignitionEnabled_time = millis();
+  if (ignitionEnabled_time - last_ignitionEnabled_time > 250){
+    Serial.print("Interrupt5 ");
+    Serial.print(y++);
+    Serial.println();
+    last_ignitionEnabled_time = ignitionEnabled_time;
+    }
+  }
+
+   void masterArm_ISR(){
+  masterArm_time = millis();
+  if (masterArm_time - last_masterArm_time > 250){
+    Serial.print("Interrupt6 ");
+    Serial.print(y++);
+    Serial.println();
+    last_masterArm_time = masterArm_time;
+    }
+  }
+
+   void telemetry_ISR(){
+  telemetry_time = millis();
+  if (telemetry_time - last_telemetry_time > 250){
+    Serial.print("Interrupt7 ");
+    Serial.print(y++);
+    Serial.println();
+    last_telemetry_time = telemetry_time;
+    }
+  }
+
+   void initiateLaunch_ISR(){
+  initiateLaunch_time = millis();
+  if (initiateLaunch_time - last_initiateLaunch_time > 250){
+    Serial.print("Interrupt8 ");
+    Serial.print(y++);
+    Serial.println();
+    last_initiateLaunch_time = initiateLaunch_time;
+    }
+  }
+
+//joyUp-tilt-elevation
+  void joyUp_ISR(){
+  joyUp_time = millis();
+  if (joyUp_time - last_joyUp_time > 500){
+        
+      //Move elevation gauge
+      elevationPos = elevationPos + jogSpeed;
+      analogWrite(elevationGauge,elevationPos);
+      
+      tiltPos = tiltPos + jogSpeed;
+      if(servoMin< tiltPos <servoMax){
+        //Move tilt servo  
+        tilt.write(tiltPos);
+      }
+    last_joyUp_time = joyUp_time;
+      if(azimuthPos <= desiredAzimuthMax && azimuthPos >= desiredAzimuthMin && elevationPos <= desiredElevationMax && elevationPos >= desiredElevationMin){
+    antennaAligned();
+      }
+    }
+  }
+
+//joyDown-tilt-elevation
+  void joyDown_ISR(){
+  joyDown_time = millis();
+  if (joyDown_time - last_joyDown_time > 500){
+        
+      //Move elevation gauge
+      elevationPos = elevationPos - jogSpeed;
+      analogWrite(elevationGauge,elevationPos);
+      
+      tiltPos = tiltPos - jogSpeed;
+      if(servoMin< tiltPos <servoMax){
+        //Move tilt servo  
+        tilt.write(tiltPos);
+      }
+    last_joyDown_time = joyDown_time;
+    
+      if(azimuthPos <= desiredAzimuthMax && azimuthPos >= desiredAzimuthMin && elevationPos <= desiredElevationMax && elevationPos >= desiredElevationMin){
+    antennaAligned();
+      }
+    }
+  }
+
+//joyLeft-pan-azimuth
+  void joyLeft_ISR(){
+  joyLeft_time = millis();
+  if (joyLeft_time - last_joyLeft_time > 500){
+        
+      //Move azimuth gauge
+      azimuthPos = azimuthPos - jogSpeed;
+      analogWrite(azimuthGauge,azimuthPos);
+      
+      panPos = panPos - jogSpeed;
+      if(servoMin< tiltPos <servoMax){
+        //Move pan servo  
+        pan.write(panPos);
+      }
+    last_joyLeft_time = joyLeft_time;
+    
+      if(azimuthPos <= desiredAzimuthMax && azimuthPos >= desiredAzimuthMin && elevationPos <= desiredElevationMax && elevationPos >= desiredElevationMin){
+    antennaAligned();
+      }
+    }
+  }
+
+//joyRight-pan-azimuth
+  void joyRight_ISR(){
+  joyRight_time = millis();
+  if (joyRight_time - last_joyRight_time > 500){
+        
+      //Move azimuth gauge
+      azimuthPos = azimuthPos + jogSpeed;
+      analogWrite(azimuthGauge,azimuthPos);
+      
+      panPos = panPos + jogSpeed;
+      if(servoMin< tiltPos <servoMax){
+        //Move pan servo  
+        pan.write(panPos);
+      }
+    last_joyRight_time = joyRight_time;
+    
+      if(azimuthPos <= desiredAzimuthMax && azimuthPos >= desiredAzimuthMin && elevationPos <= desiredElevationMax && elevationPos >= desiredElevationMin){
+    antennaAligned();
+      }
+    }
+  }
+
+
+  void antennaAligned(){
+    //TIMMMMM WRITE ME SOME CODE!!!
+    Serial.println("postition locked");
+    }
