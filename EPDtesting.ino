@@ -160,13 +160,7 @@ void setup() {
   
   Serial.begin(9600);
 
-  //Initial Display
-  display.init();
-  helloURC();
-  Servotime_now = millis();
-  
-  delay(2000);
-  statusScreen(); 
+
 
   
   //Creation of interrupts for switches and joyswitch
@@ -178,12 +172,20 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(masterArmSwitch), masterArm_ISR, LOW);
   attachInterrupt(digitalPinToInterrupt(telemetrySwitch), telemetry_ISR, LOW);
   attachInterrupt(digitalPinToInterrupt(initiateLaunchSwitch), initiateLaunch_ISR, LOW);
-//attachInterrupt(digitalPinToInterrupt(joyUp), joyUp_ISR, LOW);
-//attachInterrupt(digitalPinToInterrupt(joyDown), joyDown_ISR, LOW);
-//attachInterrupt(digitalPinToInterrupt(joyLeft), joyLeft_ISR, LOW);
-//attachInterrupt(digitalPinToInterrupt(joyRight), joyRight_ISR, LOW);
-
+  attachInterrupt(digitalPinToInterrupt(joyUp), joyUp_ISR, LOW);
+  attachInterrupt(digitalPinToInterrupt(joyDown), joyDown_ISR, LOW);
+  attachInterrupt(digitalPinToInterrupt(joyLeft), joyLeft_ISR, LOW);
+  attachInterrupt(digitalPinToInterrupt(joyRight), joyRight_ISR, LOW);
+  
+  
+  //Initialize Display
+  display.init();
+  helloURC();
+  
+  delay(2000);
+  statusScreen(); 
      
+  Servotime_now = millis();
   
 }
 //--------------------VOID LOOP-----------------------
