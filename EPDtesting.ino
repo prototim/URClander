@@ -1,35 +1,32 @@
-// GxEPD2_HelloWorld.ino by Jean-Marc Zingg
-
-// see GxEPD2_wiring_examples.h for wiring suggestions and examples
-// if you use a different wiring, you need to adapt the constructor parameters!
-
-// uncomment next line to use class GFX of library GFX_Root instead of Adafruit_GFX
-//#include <GFX.h>
-
+//-----------SECTION FOR INCLUDED LIBRARIES-------------
+// For EPD
 #include <GxEPD2_BW.h>
-//#include <GxEPD2_3C.h>
 #include <Fonts/FreeMonoBold9pt7b.h>
 #include <Fonts/FreeMonoBold18pt7b.h>
 
 // Require keyboard control library
 #include <KeyboardController.h>
 
+#include <Servo.h>
+
+// select the display class and display driver class in the following file (new style):
+#include "GxEPD2_display_selection_new_style.h"
+
+
+//----------SECTION KEYBOARD SETUP--------------
 // Initialize USB Controller
 USBHost usb;
 
 // Attach keyboard controller to USB
 KeyboardController keyboard(usb);
-
 byte keyPressCounter = 0;
+char keyLogger[16];
 
 //----------------SECTION FOR JOYSTICK AND GAUGE OUTPUT 3V------------------------------------------
-
-#include <Servo.h>
-
 Servo pan, tilt;
 
 //timing periods
-unsigned long time_now = 0;
+unsigned long Servotime_now = 0;
 const int periodServo = 500; //ms
 const int periodScreen = 2000;
 const int fiftyms = 50;
@@ -58,11 +55,23 @@ byte desiredElevationMax = 130;
 byte desiredAzimuthMin = 10;
 byte desiredElevationMin = 120;
 
+
+//-------SECTION PIN ASSIGNMENTS----------
+//Switch inputs
+const byte oxygenValveSwitch = 52;
+const byte methaneValveSwitch = 50;
+const byte turboPumpSwitch = 48;
+const byte landerLockSwitch = 46;
+const byte ignitionEnabledSwitch = 44;
+const byte masterArmSwitch = 42;
+const byte telemetrySwitch = 40;
+const byte initiateLaunchSwitch = 38;
+
 //pin assignments for the joystick
-const byte up = 23;
-const byte down = 25;
-const byte left = 22;
-const byte right = 24;
+const byte joyUp = 23;
+const byte joyDown = 25;
+const byte joyLeft = 22;
+const byte joyRight = 24;
 
 //pin assignment for the servos
 const byte panServo = 2; //PWM pin
@@ -75,83 +84,61 @@ const byte elevationGauge = 5; //PWM pin
 //antennaAligned
 bool antennaAligned = false;
 
-
-//----------------END SECTION FOR JOYSTICK AND GAUGE OUTPUT 3V------------------------------------------
-
-
-
-
-
-//----------------SECTION FOR SWITCHES------------------------------------------
-
-
-//Switch inputs
-
-const byte switchInput01 = 52;
-const byte switchInput02 = 50;
-const byte switchInput03 = 48;
-const byte switchInput04 = 46;
-const byte switchInput05 = 44;
-const byte switchInput06 = 42;
-const byte switchInput07 = 40;
-const byte switchInput08 = 38;
-const byte switchInput09 = 36;
-const byte switchInput10 = 34;
-const byte switchInput11 = 32;
-const byte switchInput12 = 30;
-const byte switchInput13 = 28;
-
-bool switchRead01 = false;
-bool switchRead02 = false;
-bool switchRead03 = false;
-bool switchRead04 = false;
-bool switchRead05 = false;
-bool switchRead06 = false;
-bool switchRead07 = false;
-bool switchRead08 = false;
-bool switchRead09 = false;
-bool switchRead10 = false;
-
-bool switchArray[10]={switchRead01, switchRead02, switchRead03, switchRead04, switchRead05, switchRead06, switchRead07, switchRead08, switchRead09 , switchRead10};
+bool oxygenValveRead = false;
+bool methaneValveRead = false;
+bool turboPumpRead = false;
+bool landerLockRead = false;
+bool ignitionEnabledRead = false;
+bool masterArmRead = false;
+bool telemetryRead = false;
+bool initiateLaunchRead = false;
 
 
 
+const byte switchInputArray[13] = {oxygenValveSwitch, methaneValveSwitch, turboPumpSwitch, landerLockSwitch, ignitionEnabledSwitch, masterArmSwitch, telemetrySwitch, initiateLaunchSwitch, joyUp, joyDown, joyLeft, joyRight};
+bool switchArrayRead[13]={oxygenValveRead, methaneValveRead, turboPumpRead, landerLockRead, ignitionEnabledRead, masterArmRead, telemetryRead, initiateLaunchRead};
 
-//----------------END SECTION FOR SWITCHES------------------------------------------
+//variables to keep track of the timing of recent interrupts
+unsigned long oxygenValve_time = 0;
+unsigned long methaneValve_time = 0;
+unsigned long turboPump_time = 0;
+unsigned long landerLock_time = 0;
+unsigned long ignitionEnabled_time = 0;
+unsigned long masterArm_time = 0;
+unsigned long telemetry_time = 0;
+unsigned long initiateLaunch_time = 0;
+unsigned long joyUp_time = 0;
+unsigned long joyDown_time = 0;
+unsigned long joyLeft_time = 0;
+unsigned long joyRight_time = 0;
 
-//pinMode(pin#, INPUT);
-
-// select the display class and display driver class in the following file (new style):
-#include "GxEPD2_display_selection_new_style.h"
-
-void setup()
-{
-
-
-  //initialize switches
-  pinMode(switchInput01, INPUT_PULLUP);
-  pinMode(switchInput02, INPUT_PULLUP);
-  pinMode(switchInput03, INPUT_PULLUP);
-  pinMode(switchInput04, INPUT_PULLUP);
-  pinMode(switchInput05, INPUT_PULLUP);
-  pinMode(switchInput06, INPUT_PULLUP);
-  pinMode(switchInput07, INPUT_PULLUP);
-  pinMode(switchInput08, INPUT_PULLUP);
-  pinMode(switchInput09, INPUT_PULLUP);
-  pinMode(switchInput10, INPUT_PULLUP);
-  pinMode(switchInput11, INPUT_PULLUP);
-  pinMode(switchInput12, INPUT_PULLUP);
-  pinMode(switchInput13, INPUT_PULLUP);
+unsigned long last_oxygenValve_time = 0;
+unsigned long last_methaneValve_time = 0;
+unsigned long last_turboPump_time = 0; 
+unsigned long last_landerLock_time = 0; 
+unsigned long last_ignitionEnabled_time = 0; 
+unsigned long last_masterArm_time = 0; 
+unsigned long last_telemetry_time = 0; 
+unsigned long last_initiateLaunch_time = 0; 
+unsigned long last_joyUp_time = 0;
+unsigned long last_joyDown_time = 0;
+unsigned long last_joyLeft_time = 0;
+unsigned long last_joyRight_time = 0;
 
 
-  //-----------ANTENNA-------------------------
-  //initialize output meters and joystick
-  pinMode(up, INPUT_PULLUP);
-  pinMode(down, INPUT_PULLUP);
-  pinMode(left, INPUT_PULLUP);
-  pinMode(right, INPUT_PULLUP);
-//  pinMode(restart, INPUT);
-//  pinMode(antennaLock, OUTPUT);
+
+//------SECTION FOR TESTING PURPOSES ONLY-------
+int y = 0;
+int x = 0;
+
+void setup() {
+
+  // Initialize Switches and Joystick
+  for (byte i = 0; i < 13; i++){
+    pinMode(switchInputArray[i], INPUT_PULLUP);
+  }
+
+  //Initialize Gauges PWM 
   pinMode(azimuthGauge, OUTPUT);
   pinMode(elevationGauge, OUTPUT);
 
@@ -161,6 +148,7 @@ void setup()
   
   pan.write(panInitial);
   tilt.write(tiltInitial);     
+  
   analogWrite(azimuthGauge,azimuthInitial);     
   analogWrite(elevationGauge,elevationInitial);
   
@@ -169,35 +157,44 @@ void setup()
   
   azimuthPos = azimuthInitial;
   elevationPos = elevationInitial;
-
-
-  //------------END ANTENNA-------------------
   
   Serial.begin(9600);
+
+  //Initial Display
   display.init();
   helloURC();
-  time_now = millis();
+  Servotime_now = millis();
   
   delay(2000);
-  statusScreen();      
-
-}
-
-
-/*void checkSwitches()
-{
+  statusScreen(); 
 
   
+  //Creation of interrupts for switches and joyswitch
+  attachInterrupt(digitalPinToInterrupt(oxygenValveSwitch), oxygenValve_ISR, LOW);
+  attachInterrupt(digitalPinToInterrupt(methaneValveSwitch), methaneValve_ISR, LOW);
+  attachInterrupt(digitalPinToInterrupt(turboPumpSwitch), turboPump_ISR, LOW);
+  attachInterrupt(digitalPinToInterrupt(landerLockSwitch), landerLock_ISR, LOW);
+  attachInterrupt(digitalPinToInterrupt(ignitionEnabledSwitch), ignitionEnabled_ISR, LOW);
+  attachInterrupt(digitalPinToInterrupt(masterArmSwitch), masterArm_ISR, LOW);
+  attachInterrupt(digitalPinToInterrupt(telemetrySwitch), telemetry_ISR, LOW);
+  attachInterrupt(digitalPinToInterrupt(initiateLaunchSwitch), initiateLaunch_ISR, LOW);
+//attachInterrupt(digitalPinToInterrupt(joyUp), joyUp_ISR, LOW);
+//attachInterrupt(digitalPinToInterrupt(joyDown), joyDown_ISR, LOW);
+//attachInterrupt(digitalPinToInterrupt(joyLeft), joyLeft_ISR, LOW);
+//attachInterrupt(digitalPinToInterrupt(joyRight), joyRight_ISR, LOW);
+
+     
+  
 }
-/**/
+//--------------------VOID LOOP-----------------------
+void loop(){
+  //attach USB task
+  usb.Task();
+  updateKeyboardScreen();
+}
 
 
-
-//keyboard
-// This function intercepts key press
-
-char keyLogger[16];
-
+//--------------------KEYBOARD FUNCTION-----------------------
 void keyPressed()
 {
   if (keyPressCounter > 16){ keyPressCounter = 0;}
@@ -216,70 +213,10 @@ void keyPressed()
     keyPressCounter++;
   }
 
-
-//  Serial.print(keyLogger[0]);
-//  Serial.print(keyLogger[1]);
-//  Serial.print(keyLogger[2]);
-//  Serial.print(keyLogger[3]);
-//  Serial.print(keyLogger[4]);
-//  Serial.print(keyLogger[5]);
-//  Serial.print(keyLogger[6]);
-//  Serial.print(keyLogger[7]);
-//  Serial.print(keyLogger[8]);
-//  Serial.print(keyLogger[9]);
-//  Serial.print(keyLogger[10]);
-//  Serial.print(keyLogger[11]);
-//  Serial.print(keyLogger[12]);
-//  Serial.print(keyLogger[13]);
-//  Serial.print(keyLogger[14]);
-//  Serial.print(keyLogger[15]);
-//  Serial.println("");
-
-}
-
-void updateSwitchScreen()
-{
-
-  if(digitalRead(switchInput01) == LOW){switchArray[0] = true;}
-  if(digitalRead(switchInput02) == LOW){switchArray[1] = true;}
-  if(digitalRead(switchInput03) == LOW){switchArray[2] = true;}
-  if(digitalRead(switchInput04) == LOW){switchArray[3] = true;}
-  if(digitalRead(switchInput05) == LOW){switchArray[4] = true;}
-  if(digitalRead(switchInput06) == LOW){switchArray[5] = true;}
-  if(digitalRead(switchInput07) == LOW){switchArray[6] = true;}
-  if(digitalRead(switchInput08) == LOW){switchArray[7] = true;}
-  if(digitalRead(switchInput09) == LOW){switchArray[8] = true;}
-  if(digitalRead(switchInput10) == LOW){switchArray[9] = true;}
-  
-  display.setRotation(0);
-  display.setFont(&FreeMonoBold9pt7b);
-  display.setTextColor(GxEPD_BLACK);
-  int16_t tbx, tby; uint16_t tbw, tbh;
-
-
-  uint16_t x_input = 24;
-  uint16_t y_input = 8;
-
-    //remember to use increment of 8
-    display.setPartialWindow(x_input,y_input-8,24,152);
-    display.firstPage();
-    do
-    {
-      display.fillRect(x_input, y_input, 24, 8, GxEPD_BLACK);
-      display.fillRect(x_input, y_input+20, 24, 8, GxEPD_BLACK);
-      display.fillRect(x_input, y_input+40, 24, 8, GxEPD_BLACK);
-      display.fillRect(x_input, y_input+60, 24, 8, GxEPD_BLACK);
-      display.fillRect(x_input, y_input+80, 24, 8, GxEPD_BLACK);
-      display.fillRect(x_input, y_input+100, 24, 8, GxEPD_BLACK);
-      display.fillRect(x_input, y_input+120, 24, 8, GxEPD_BLACK);
-      
-
-
-    }
-    while (display.nextPage());
 }
 
 
+//--------------------EPD-----------------------
 void updateKeyboardScreen()
 {  
   display.setRotation(0);
@@ -290,13 +227,6 @@ void updateKeyboardScreen()
 
   uint16_t x_input = 24;
   uint16_t y_input = 240;
-
-    //display.getTextBounds(HelloWorld, 0, 0, &tbx, &tby, &tbw, &tbh);
-    // center the bounding box by transposition of the origin:
-    //uint16_t x = ((display.width() - tbw) / 2) - tbx;
-    //uint16_t y = ((display.height() - tbh) / 2) - tby;
-    //top left of screen
-    //display.setFullWindow();
 
     //remember to use increment of 8
     display.setPartialWindow(x_input-24,y_input-24,376,48);
@@ -324,7 +254,6 @@ void updateKeyboardScreen()
     }
     while (display.nextPage());
 }
-    
 
 
 void helloURC()
@@ -333,11 +262,7 @@ void helloURC()
   display.setFont(&FreeMonoBold18pt7b);
   display.setTextColor(GxEPD_BLACK);
   int16_t tbx, tby; uint16_t tbw, tbh;
-//  display.getTextBounds(HelloWorld, 0, 0, &tbx, &tby, &tbw, &tbh);
-  // center the bounding box by transposition of the origin:
-//  uint16_t x = ((display.width() - tbw) / 2) - tbx;
-//  uint16_t y = ((display.height() - tbh) / 2) - tby;
-  //top left of screen
+
   uint16_t x =100;
   uint16_t y =100;
   display.setFullWindow();
@@ -357,41 +282,19 @@ void helloURC()
   while (display.nextPage());
 
 
-}
 
+}
 
 void statusScreen()
 {
 
-  //read switches
-  if(digitalRead(switchInput01) == LOW){switchArray[0] = true;}
-  if(digitalRead(switchInput02) == LOW){switchArray[1] = true;}
-  if(digitalRead(switchInput03) == LOW){switchArray[2] = true;}
-  if(digitalRead(switchInput04) == LOW){switchArray[3] = true;}
-  if(digitalRead(switchInput05) == LOW){switchArray[4] = true;}
-  if(digitalRead(switchInput06) == LOW){switchArray[5] = true;}
-  if(digitalRead(switchInput07) == LOW){switchArray[6] = true;}
-  if(digitalRead(switchInput08) == LOW){switchArray[7] = true;}
-  if(digitalRead(switchInput09) == LOW){switchArray[8] = true;}
-  if(digitalRead(switchInput10) == LOW){switchArray[9] = true;}
-
- // Serial.print(switchArray[0]);
-
-
-
-
-  
   display.setRotation(0);
   display.setFont(&FreeMonoBold9pt7b);
   display.setTextColor(GxEPD_BLACK);
   int16_t tbx, tby; uint16_t tbw, tbh;
-  //display.getTextBounds(HelloWorld, 0, 0, &tbx, &tby, &tbw, &tbh);
-  // center the bounding box by transposition of the origin:
-  //uint16_t x = ((display.width() - tbw) / 2) - tbx;
-  //uint16_t y = ((display.height() - tbh) / 2) - tby;
-  //top left of screen
-  uint16_t x = 8;
-  uint16_t y =16;
+
+  uint16_t x =10;
+  uint16_t y =15;
   display.setFullWindow();
   display.firstPage();
   do
@@ -471,142 +374,199 @@ void statusScreen()
 
 }
 
+//--------------------INTERRUPT FUNCTION-----------------------
 
-void loop() {
-  
-  //attach USB task
-  usb.Task();
+void taskUpdate(int switchNum){
+  display.setRotation(0);
+  display.setFont(&FreeMonoBold9pt7b);
+  display.setTextColor(GxEPD_BLACK);
+  int16_t tbx, tby; uint16_t tbw, tbh;
 
 
-//  if(digitalRead(restart) == HIGH){
-//    digitalWrite(antennaLock, LOW);
-//    Serial.println("Resetting");
-//    //Reset servos and gauges
-//    pan.write(panInitial);
-//    delay(500);
-//    tilt.write(tiltInitial);
-//    delay(500);
-//    analogWrite(azimuthGauge,azimuthInitial);
-//    analogWrite(elevationGauge,elevationInitial); 
-//    //Reset postions
-//    panPos = panInitial;
-//    tiltPos = tiltInitial;
-//    azimuthPos = azimuthInitial;
-//    elevationPos = elevationInitial;
-//    digitalWrite(antennaLock, LOW);
-//   }
+  uint16_t x_input = 24;
+  uint16_t y_input = 8;
 
- //right-pan-azimuth
-  if(digitalRead(right) == LOW && azimuthPos <= servoMax && antennaAligned == false){
-    if( millis() > time_now + periodServo)
+    //remember to use increment of 8
+    display.setPartialWindow(x_input,y_input-8,24,152);
+    display.firstPage();
+    do
     {
-      time_now = millis();    
-      //Move elevation gauge
-      azimuthPos = azimuthPos + jogSpeed;
-      Serial.print("Az Gauge Pos: ");
-      Serial.print(azimuthPos);
-      analogWrite(azimuthGauge,azimuthPos);
-  
-      //Move pan servo
-      panPos = panPos + jogSpeed;
-      pan.write(panPos);
-      //delay(500);
-      Serial.print("   Servo right: ");
-      Serial.println(panPos);
-  
-      //If both gauges are lined up, then send signal to the Pi
-      if(azimuthPos <= desiredAzimuthMax && azimuthPos >= desiredAzimuthMin && elevationPos <= desiredElevationMax && elevationPos >= desiredElevationMin){
-       Serial.println("postition locked");
-       antennaAligned = true; 
-      }
+      display.fillRect(x_input, y_input+20*switchNum, 24, 8, GxEPD_BLACK);
     }
-   }
+    while (display.nextPage());
+  
+  
+  }
 
-   
- //left-pan-azimuth
-  if(digitalRead(left) == LOW && azimuthPos >= servoMin && antennaAligned == false){
-    if( millis() > time_now + periodServo)
-    {
-      time_now = millis();    
-      //Move elevation gauge
-      azimuthPos = azimuthPos - jogSpeed;
-//      Serial.print("Az Gauge Pos: ");
-//      Serial.print(azimuthPos);
-      analogWrite(azimuthGauge,azimuthPos);
-  
-      //Move pan servo
-      panPos = panPos - jogSpeed;
-      pan.write(panPos);
-      //delay(500);
-//      Serial.print("   Servo left: ");
-//      Serial.println(panPos);
-  
-  
-      //If both gauges are lined up, then send signal to the Pi
-      if(azimuthPos <= desiredAzimuthMax && azimuthPos >= desiredAzimuthMin && elevationPos <= desiredElevationMax && elevationPos >= desiredElevationMin){
-       Serial.println("postition locked");
-       antennaAligned = true; 
-      }
+void oxygenValve_ISR(){
+  oxygenValve_time = millis();
+  if (oxygenValve_time - last_oxygenValve_time > 250){
+     taskUpdate(1);
+    last_oxygenValve_time = oxygenValve_time;
     }
-   }
+  }
 
-//up-tilt-elevation
-  if(digitalRead(up) == LOW && elevationPos <= servoMax && antennaAligned == false){
-    if( millis() > time_now + periodServo)
-    {
-      time_now = millis();      
+  void methaneValve_ISR(){
+  methaneValve_time = millis();
+  if (methaneValve_time - last_methaneValve_time > 250){
+    Serial.print("Interrupt2 ");
+    Serial.print(y++);
+    Serial.println();
+    last_methaneValve_time = methaneValve_time;
+    }
+  }
+
+
+  void turboPump_ISR(){
+  turboPump_time = millis();
+  if (turboPump_time - last_turboPump_time > 250){
+    Serial.print("Interrupt3 ");
+    Serial.print(y++);
+    Serial.println();
+    last_turboPump_time = turboPump_time;
+    }
+  }
+
+
+   void landerLock_ISR(){
+  landerLock_time = millis();
+  if (landerLock_time - last_landerLock_time > 250){
+    Serial.print("Interrupt4 ");
+    Serial.print(y++);
+    Serial.println();
+    last_landerLock_time = landerLock_time;
+    }
+  }
+
+   void ignitionEnabled_ISR(){
+  ignitionEnabled_time = millis();
+  if (ignitionEnabled_time - last_ignitionEnabled_time > 250){
+    Serial.print("Interrupt5 ");
+    Serial.print(y++);
+    Serial.println();
+    last_ignitionEnabled_time = ignitionEnabled_time;
+    }
+  }
+
+   void masterArm_ISR(){
+  masterArm_time = millis();
+  if (masterArm_time - last_masterArm_time > 250){
+    Serial.print("Interrupt6 ");
+    Serial.print(y++);
+    Serial.println();
+    last_masterArm_time = masterArm_time;
+    }
+  }
+
+   void telemetry_ISR(){
+  telemetry_time = millis();
+  if (telemetry_time - last_telemetry_time > 250){
+    Serial.print("Interrupt7 ");
+    Serial.print(y++);
+    Serial.println();
+    last_telemetry_time = telemetry_time;
+    }
+  }
+
+   void initiateLaunch_ISR(){
+  initiateLaunch_time = millis();
+  if (initiateLaunch_time - last_initiateLaunch_time > 250){
+    Serial.print("Interrupt8 ");
+    Serial.print(y++);
+    Serial.println();
+    last_initiateLaunch_time = initiateLaunch_time;
+    }
+  }
+
+//joyUp-tilt-elevation
+  void joyUp_ISR(){
+  joyUp_time = millis();
+  if (joyUp_time - last_joyUp_time > 500){
+        
       //Move elevation gauge
       elevationPos = elevationPos + jogSpeed;
-//      Serial.print("Ev Gauge Pos: ");
-//      Serial.print(elevationPos);
       analogWrite(elevationGauge,elevationPos);
-  
-      //Move pan servo
-      tiltPos = tiltPos + jogSpeed;
-      tilt.write(tiltPos);
-      //delay(500);
-//      Serial.print("  Servo Up: ");
-//      Serial.println(tiltPos);
-  
       
-      //If both gauges are lined up, then send signal to the Pi
+      tiltPos = tiltPos + jogSpeed;
+      if(servoMin< tiltPos <servoMax){
+        //Move tilt servo  
+        tilt.write(tiltPos);
+      }
+    last_joyUp_time = _time;
       if(azimuthPos <= desiredAzimuthMax && azimuthPos >= desiredAzimuthMin && elevationPos <= desiredElevationMax && elevationPos >= desiredElevationMin){
-       Serial.println("postition locked");
-       antennaAligned = true; 
+    antennaAligned();
       }
     }
-   }
+  }
 
-//down-tilt-elevation
-  if(digitalRead(down) == LOW && elevationPos >= servoMin && antennaAligned == false){
-    if( millis() > time_now + periodServo)
-    {
-      time_now = millis();
+//joyDown-tilt-elevation
+  void joyDown_ISR(){
+  joyDown_time = millis();
+  if (joyDown_time - last_joyDown_time > 500){
+        
       //Move elevation gauge
       elevationPos = elevationPos - jogSpeed;
-      Serial.print("Ev Gague Pos: ");
-      Serial.print(elevationPos);
       analogWrite(elevationGauge,elevationPos);
-  
-      //Move pan servo
-      tiltPos = tiltPos - jogSpeed;
-      tilt.write(tiltPos);
-      //delay(500);
       
-      Serial.print("   Servo Down: ");
-      Serial.println(tiltPos);
-  
-      //If both gauges are lined up, then set a flag to true
+      tiltPos = tiltPos - jogSpeed;
+      if(servoMin< tiltPos <servoMax){
+        //Move tilt servo  
+        tilt.write(tiltPos);
+      }
+    last_joyDown_time = joyDown_time;
+    
       if(azimuthPos <= desiredAzimuthMax && azimuthPos >= desiredAzimuthMin && elevationPos <= desiredElevationMax && elevationPos >= desiredElevationMin){
-       Serial.println("postition locked");
-       antennaAligned = true;
+    antennaAligned();
       }
     }
+  }
+
+//joyLeft-pan-azimuth
+  void joyLeft_ISR(){
+  joyLeft_time = millis();
+  if (joyLeft_time - last_joyLeft_time > 500){
+        
+      //Move azimuth gauge
+      azimuthPos = azimuthPos - jogSpeed;
+      analogWrite(azimuthGauge,azimuthPos);
+      
+      panPos = panPos - jogSpeed;
+      if(servoMin< tiltPos <servoMax){
+        //Move pan servo  
+        pan.write(panPos);
+      }
+    last_joyLeft_time = joyLeft_time;
     
-   }
+      if(azimuthPos <= desiredAzimuthMax && azimuthPos >= desiredAzimuthMin && elevationPos <= desiredElevationMax && elevationPos >= desiredElevationMin){
+    antennaAligned();
+      }
+    }
+  }
+
+//joyRight-pan-azimuth
+  void joyRight_ISR(){
+  joyRight_time = millis();
+  if (joyRight_time - last_joyRight_time > 500){
+        
+      //Move azimuth gauge
+      azimuthPos = azimuthPos + jogSpeed;
+      analogWrite(azimuthGauge,azimuthPos);
+      
+      panPos = panPos + jogSpeed;
+      if(servoMin< tiltPos <servoMax){
+        //Move pan servo  
+        pan.write(panPos);
+      }
+    last_joyRight_time = joyRight_time;
+    
+      if(azimuthPos <= desiredAzimuthMax && azimuthPos >= desiredAzimuthMin && elevationPos <= desiredElevationMax && elevationPos >= desiredElevationMin){
+    antennaAligned();
+      }
+    }
+  }
 
 
-  updateSwitchScreen();
-  updateKeyboardScreen();
-
-}
+  void antennaAligned(){
+    //TIMMMMM WRITE ME SOME CODE!!!
+    Serial.println("postition locked");
+    }
