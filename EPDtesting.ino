@@ -236,6 +236,50 @@ void keyPressed()
 //  Serial.println("");
 
 }
+
+void updateSwitchScreen()
+{
+
+  if(digitalRead(switchInput01) == LOW){switchArray[0] = true;}
+  if(digitalRead(switchInput02) == LOW){switchArray[1] = true;}
+  if(digitalRead(switchInput03) == LOW){switchArray[2] = true;}
+  if(digitalRead(switchInput04) == LOW){switchArray[3] = true;}
+  if(digitalRead(switchInput05) == LOW){switchArray[4] = true;}
+  if(digitalRead(switchInput06) == LOW){switchArray[5] = true;}
+  if(digitalRead(switchInput07) == LOW){switchArray[6] = true;}
+  if(digitalRead(switchInput08) == LOW){switchArray[7] = true;}
+  if(digitalRead(switchInput09) == LOW){switchArray[8] = true;}
+  if(digitalRead(switchInput10) == LOW){switchArray[9] = true;}
+  
+  display.setRotation(0);
+  display.setFont(&FreeMonoBold9pt7b);
+  display.setTextColor(GxEPD_BLACK);
+  int16_t tbx, tby; uint16_t tbw, tbh;
+
+
+  uint16_t x_input = 24;
+  uint16_t y_input = 8;
+
+    //remember to use increment of 8
+    display.setPartialWindow(x_input,y_input-8,24,152);
+    display.firstPage();
+    do
+    {
+      display.fillRect(x_input, y_input, 24, 8, GxEPD_BLACK);
+      display.fillRect(x_input, y_input+20, 24, 8, GxEPD_BLACK);
+      display.fillRect(x_input, y_input+40, 24, 8, GxEPD_BLACK);
+      display.fillRect(x_input, y_input+60, 24, 8, GxEPD_BLACK);
+      display.fillRect(x_input, y_input+80, 24, 8, GxEPD_BLACK);
+      display.fillRect(x_input, y_input+100, 24, 8, GxEPD_BLACK);
+      display.fillRect(x_input, y_input+120, 24, 8, GxEPD_BLACK);
+      
+
+
+    }
+    while (display.nextPage());
+}
+
+
 void updateKeyboardScreen()
 {  
   display.setRotation(0);
@@ -281,55 +325,7 @@ void updateKeyboardScreen()
     while (display.nextPage());
 }
     
-// This function intercepts key release
-//void keyReleased() {
-//  //Serial.print("Released: ");
-//  printKey();
-//}
 
-//void printKey() {
-//  // getOemKey() returns the OEM-code associated with the key
-//  Serial.print(" key:");
-//  Serial.print(keyboard.getOemKey());
-//
-//  // getModifiers() returns a bits field with the modifiers-keys
-//  int mod = keyboard.getModifiers();
-//  Serial.print(" mod:");
-//  Serial.print(mod);
-//
-//  Serial.print(" => ");
-//
-//  if (mod & LeftCtrl) {
-//    Serial.print("L-Ctrl ");
-//  }
-//  if (mod & LeftShift) {
-//    Serial.print("L-Shift ");
-//  }
-//  if (mod & Alt) {
-//    Serial.print("Alt ");
-//  }
-//  if (mod & LeftCmd) {
-//    Serial.print("L-Cmd ");
-//  }
-//  if (mod & RightCtrl) {
-//    Serial.print("R-Ctrl ");
-//  }
-//  if (mod & RightShift) {
-//    Serial.print("R-Shift ");
-//  }
-//  if (mod & AltGr) {
-//    Serial.print("AltGr ");
-//  }
-//  if (mod & RightCmd) {
-//    Serial.print("R-Cmd ");
-//  }
-//
-//    // getKey() returns the ASCII translation of OEM key
-//  // combined with modifiers.
-//  Serial.write(keyboard.getKey());
-//  Serial.println();
-//}
-//end keyboard
 
 void helloURC()
 {
@@ -361,7 +357,6 @@ void helloURC()
   while (display.nextPage());
 
 
-
 }
 
 
@@ -380,7 +375,7 @@ void statusScreen()
   if(digitalRead(switchInput09) == LOW){switchArray[8] = true;}
   if(digitalRead(switchInput10) == LOW){switchArray[9] = true;}
 
-  Serial.print(switchArray[0]);
+ // Serial.print(switchArray[0]);
 
 
 
@@ -395,8 +390,8 @@ void statusScreen()
   //uint16_t x = ((display.width() - tbw) / 2) - tbx;
   //uint16_t y = ((display.height() - tbh) / 2) - tby;
   //top left of screen
-  uint16_t x =10;
-  uint16_t y =15;
+  uint16_t x = 8;
+  uint16_t y =16;
   display.setFullWindow();
   display.firstPage();
   do
@@ -611,6 +606,7 @@ void loop() {
    }
 
 
+  updateSwitchScreen();
   updateKeyboardScreen();
 
 }
