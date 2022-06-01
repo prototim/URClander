@@ -582,20 +582,20 @@ void panTilt()
       time_now = millis();
       //Move elevation gauge
       azimuthPos = azimuthPos + jogSpeed;
-      Serial.print("Az Gauge Pos: ");
-      Serial.print(azimuthPos);
+//     Serial.print("Az Gauge Pos: ");
+//     Serial.print(azimuthPos);
       analogWrite(azimuthGauge, azimuthPos);
 
       //Move pan servo
       panPos = panPos + jogSpeed;
       pan.write(panPos);
       //delay(500);
-      Serial.print("   Servo right: ");
-      Serial.println(panPos);
+//      Serial.print("   Servo right: ");
+//      Serial.println(panPos);
 
       //If both gauges are lined up, then send signal to the Pi
       if (azimuthPos <= desiredAzimuthMax && azimuthPos >= desiredAzimuthMin && elevationPos <= desiredElevationMax && elevationPos >= desiredElevationMin) {
-        Serial.println("postition locked");
+//        Serial.println("postition locked");
         //antennaAligned = true;
       }
     }
